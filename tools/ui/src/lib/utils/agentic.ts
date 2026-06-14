@@ -19,6 +19,8 @@ export interface AgenticSection {
 	toolResult?: string;
 	toolResultExtras?: DatabaseMessageExtra[];
 	wasInterrupted?: boolean;
+	svg?: string;
+	svgTitle?: string;
 }
 
 /**
@@ -69,20 +71,34 @@ function deriveSingleTurnSections(
 	const toolCalls = parseToolCalls(message.toolCalls);
 	for (const tc of toolCalls) {
 		const resultMsg = toolMessages.find((m) => m.toolCallId === tc.id);
-		// Only show as pending/loading if we're actively streaming; otherwise it's just a tool call without result
-		const type = resultMsg
-			? AgenticSectionType.TOOL_CALL
-			: isStreaming
-				? AgenticSectionType.TOOL_CALL_PENDING
-				: AgenticSectionType.TOOL_CALL;
-		sections.push({
-			type,
-			content: resultMsg?.content || '',
-			toolName: tc.function?.name,
-			toolArgs: tc.function?.arguments,
-			toolResult: resultMsg?.content,
-			toolResultExtras: resultMsg?.extra
-		});
+		const resultContent = resultMsg?.content || '';
+		const svgData = parseToolResultAsSvg(resultContent, tc.function?.name);
+
+		if (svgData && resultMsg) {
+			sections.push({
+				type: AgenticSectionType.VISUALIZATION,
+				content: '',
+				toolName: tc.function?.name,
+				toolArgs: tc.function?.arguments,
+				svg: svgData.svg,
+				svgTitle: svgData.title
+			});
+		} else {
+			// Only show as pending/loading if we're actively streaming; otherwise it's just a tool call without result
+			const type = resultMsg
+				? AgenticSectionType.TOOL_CALL
+				: isStreaming
+					? AgenticSectionType.TOOL_CALL_PENDING
+					: AgenticSectionType.TOOL_CALL;
+			sections.push({
+				type,
+				content: resultContent,
+				toolName: tc.function?.name,
+				toolArgs: tc.function?.arguments,
+				toolResult: resultContent,
+				toolResultExtras: resultMsg?.extra
+			});
+		}
 	}
 
 	// 4. Streaming tool calls (not yet persisted - currently being received)
@@ -285,4 +301,41 @@ export function classifyContinueIntent(messages: DatabaseMessage[], idx: number)
 	}
 
 	return { kind: ContinueIntentKind.RERUN_TURN, truncateAfter: idx - 1 };
+}
+
+/**
+ * SVG title marker used by SvgService to prefix the SVG content.
+ * Format: [SVG: <title>]
+ */
+const SVG_TITLE_REGEX = /^\[SVG:\s*([^\]]*)\]\s*$/;
+
+/**
+ * Parse a tool result that may contain an embedded SVG visualization.
+ *
+ * SvgService prefixes SVG output with [SVG: <title>] on the first line,
+ * followed by the raw SVG markup. This function extracts both parts.
+ *
+ * @param toolResult - The tool result text
+ * @param toolName - The name of the tool that produced the result
+ * @returns Parsed SVG data or null if not an SVG result
+ */
+export function parseToolResultAsSvg(
+	toolResult: string,
+	toolName: string
+): { svg: string; title: string } | null {
+	if (toolName !== 'render_svg' || !toolResult) return null;
+
+	const lines = toolResult.split(NEWLINE_SEPARATOR);
+	if (lines.length < 2) return null;
+
+	const firstLine = lines[0].trim();
+	const titleMatch = firstLine.match(SVG_TITLE_REGEX);
+	const title = titleMatch ? titleMatch[1].trim() : '';
+
+	// Rejoin remaining lines as the SVG content
+	const svgContent = lines.slice(1).join(NEWLINE_SEPARATOR).trim();
+
+	if (!svgContent) return null;
+
+	return { svg: svgContent, title };
 }

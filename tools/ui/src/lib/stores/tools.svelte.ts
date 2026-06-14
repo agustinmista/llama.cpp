@@ -6,6 +6,7 @@ import { config } from '$lib/stores/settings.svelte';
 import {
 	DISABLED_TOOL_KEYS_LOCALSTORAGE_KEY,
 	SANDBOX_TOOL_DEFINITION,
+	RENDER_SVG_TOOL_DEFINITION,
 	TOOL_GROUP_LABELS,
 	TOOL_SERVER_LABELS
 } from '$lib/constants';
@@ -86,7 +87,10 @@ class ToolsStore {
 	}
 
 	get frontendTools(): OpenAIToolDefinition[] {
-		return config().jsSandboxEnabled ? [SANDBOX_TOOL_DEFINITION] : [];
+		const tools: OpenAIToolDefinition[] = [];
+		if (config().jsSandboxEnabled) tools.push(SANDBOX_TOOL_DEFINITION);
+		if (config().svgRenderEnabled) tools.push(RENDER_SVG_TOOL_DEFINITION);
+		return tools;
 	}
 
 	get customTools(): OpenAIToolDefinition[] {

@@ -71,6 +71,7 @@ export const SETTINGS_KEYS = {
 	SHOW_RAW_OUTPUT_SWITCH: 'showRawOutputSwitch',
 	// PY_INTERPRETER_ENABLED: 'pyInterpreterEnabled',
 	JS_SANDBOX_ENABLED: 'jsSandboxEnabled',
+	SVG_RENDER_ENABLED: 'svgRenderEnabled',
 	CUSTOM_JSON: 'customJson',
 	CUSTOM_CSS: 'customCss'
 } as const;

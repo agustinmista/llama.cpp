@@ -129,7 +129,8 @@
 			const isTool =
 				section.type === AgenticSectionType.TOOL_CALL ||
 				section.type === AgenticSectionType.TOOL_CALL_PENDING ||
-				section.type === AgenticSectionType.TOOL_CALL_STREAMING;
+				section.type === AgenticSectionType.TOOL_CALL_STREAMING ||
+				section.type === AgenticSectionType.VISUALIZATION;
 
 			if (!isTool && prevWasTool && currentTurn.length > 0) {
 				turns.push({ sections: currentTurn, flatIndices: currentIndices });
@@ -194,6 +195,24 @@
 		<div class="agentic-text">
 			<MarkdownContent content={section.content} attachments={message?.extra} />
 		</div>
+	{:else if section.type === AgenticSectionType.VISUALIZATION}
+		<CollapsibleContentBlock
+			open={isExpanded(index, section)}
+			class="my-2"
+			icon={Wrench}
+			title={section.svgTitle || section.toolName || 'Visualization'}
+			onToggle={() => toggleExpanded(index, section)}
+		>
+			{#if section.svg}
+				<div class="pt-3">
+					<div class="svg-container overflow-auto rounded-lg border border-border bg-muted p-4">
+						{@html section.svg}
+					</div>
+				</div>
+			{:else}
+				<div class="rounded bg-muted/30 p-2 text-xs text-muted-foreground italic">No output</div>
+			{/if}
+		</CollapsibleContentBlock>
 	{:else if section.type === AgenticSectionType.TOOL_CALL_STREAMING}
 		{@const streamingIcon = isStreaming ? Loader2 : Loader2}
 		{@const streamingIconClass = isStreaming ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
@@ -400,6 +419,16 @@
 
 	.agentic-text {
 		width: 100%;
+	}
+
+	.svg-container {
+		display: flex;
+		justify-content: center;
+	}
+
+	.svg-container :global(svg) {
+		max-width: 100%;
+		height: auto;
 	}
 
 	.agentic-turn {

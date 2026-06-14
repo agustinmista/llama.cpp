@@ -282,6 +282,23 @@ export { MCPService } from './mcp.service';
 export { SandboxService } from './sandbox.service';
 
 /**
+ * **SvgService** — SVG rendering for the render_svg frontend tool
+ *
+ * Stateless executor for the render_svg frontend tool. Sanitizes raw SVG markup
+ * (stripping <script>, <style>, event handlers, javascript: URLs) and returns
+ * the cleaned output for embedded rendering in the chat.
+ *
+ * **Architecture & Relationships:**
+ * - **SvgService** (this class): Stateless SVG sanitization and formatting
+ * - **toolsStore**: Exposes the tool definition when SVG rendering is enabled
+ * - **agenticStore**: Dispatches ToolSource.FRONTEND calls here
+ *
+ * @see RENDER_SVG_TOOL_DEFINITION in constants/svg.ts - tool schema sent to the LLM
+ * @see agenticStore in stores/agentic.svelte.ts - tool dispatch
+ */
+export { SvgService } from './svg.service';
+
+/**
  * **RouterService** — Dynamic route URL construction utility
  *
  * Stateless utility for building dynamic route URLs from ROUTES base paths.

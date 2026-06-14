@@ -41,6 +41,7 @@ export * from './pwa';
 export * from './routes';
 export * from './sandbox';
 export * from './settings-keys';
+export * from './svg';
 export * from './settings-registry';
 export * from './supported-file-types';
 export * from './table-html-restorer';
